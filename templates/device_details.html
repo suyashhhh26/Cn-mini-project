@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+{% block title %}Device Details{% endblock %}
+{% block nav_devices %}active{% endblock %}
+{% block page_title %}Device Details{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<div style="margin-bottom:18px;font-size:0.84rem;color:var(--color-text-muted);">
+  <a href="/devices" style="color:var(--color-blue);"><i class="fa-solid fa-server"></i> Devices</a>
+  <span style="margin:0 8px;">›</span>
+  <span id="breadcrumbName">Loading…</span>
+</div>
+
+<div id="deviceDetailContent">
+  <div class="loading-overlay" style="padding:60px;"><span class="spinner"></span> Loading device…</div>
+</div>
+
+<!-- Response Time Chart (hidden until loaded) -->
+<div id="chartsSection" style="display:none;margin-top:20px;">
+  <div class="grid-2 mb-6">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-chart-line"></i> Response Time History</span>
+        <select id="rtRange" class="filter-select" style="font-size:0.78rem;padding:5px 9px;">
+          <option value="1h">Last 1h</option>
+          <option value="24h" selected>Last 24h</option>
+          <option value="7d">Last 7d</option>
+        </select>
+      </div>
+      <div class="card-body">
+        <div class="chart-container" style="height:220px;"><canvas id="deviceRtChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-arrow-trend-up"></i> Availability Trend</span>
+      </div>
+      <div class="card-body">
+        <div class="chart-container" style="height:220px;"><canvas id="deviceAvailChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analytics Stats -->
+  <div class="stat-grid mb-6" id="deviceStatGrid"></div>
+
+  <!-- Recent Probes -->
+  <div class="grid-2 mb-6">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-list-check"></i> Recent Probes</span>
+      </div>
+      <div class="card-body p0">
+        <div style="max-height:320px;overflow-y:auto;">
+          <table class="nm-table" id="probesTable">
+            <thead><tr><th>Time</th><th>Result</th><th>Response</th><th>Error</th></tr></thead>
+            <tbody id="probesBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-bell"></i> Recent Events</span>
+      </div>
+      <div class="card-body p0">
+        <div id="deviceEventsContainer" style="max-height:320px;overflow-y:auto;padding:12px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const DEVICE_ID = {{ device_id }};
+let rtChart = null, availChart = null;
+
+async function loadDeviceDetail() {
+  const r = await apiGet(`/api/devices/${DEVICE_ID}`);
+  if (!r.ok) {
+    document.getElementById('deviceDetailContent').innerHTML =
+      `<div class="empty-state"><div class="empty-state-icon">⚠️</div><h3>Device Not Found</h3><a href="/devices" class="btn btn-primary">Back to Devices</a></div>`;
+    return;
+  }
+  const d = r.data.data;
+  document.getElementById('breadcrumbName').textContent = d.name;
+
+  const statusColor = { online: '#1db954', offline: '#e53935', unknown: '#78909c' };
+  const sc = statusColor[d.current_status] || '#78909c';
+
+  document.getElementById('deviceDetailContent').innerHTML = `
+    <div class="card mb-6">
+      <div class="card-body">
+        <div style="display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap;">
+          <div style="width:60px;height:60px;border-radius:14px;background:rgba(26,120,194,0.1);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;">
+            <i class="fa-solid ${deviceTypeIcon(d.device_type)}" style="color:var(--color-blue);"></i>
+          </div>
+          <div style="flex:1;min-width:240px;">
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
+              <h2 style="font-size:1.3rem;font-weight:800;color:var(--color-navy);">${escHtml(d.name)}</h2>
+              ${statusBadge(d.current_status)}
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;font-size:0.84rem;">
+              <div><span class="text-muted">Target:</span> <code style="background:rgba(26,120,194,0.08);padding:2px 8px;border-radius:5px;">${escHtml(d.target)}</code></div>
+              <div><span class="text-muted">Type:</span> ${escHtml(d.device_type)}</div>
+              <div><span class="text-muted">Location:</span> ${escHtml(d.location || '—')}</div>
+              <div><span class="text-muted">Interval:</span> ${d.monitoring_interval}s</div>
+              <div><span class="text-muted">Last Checked:</span> ${formatTs(d.last_checked_at)}</div>
+              <div><span class="text-muted">Last Success:</span> ${formatTs(d.last_success_at)}</div>
+              <div><span class="text-muted">Added:</span> ${formatTs(d.created_at)}</div>
+              <div><span class="text-muted">Monitoring:</span>
+                <span class="badge ${d.is_monitoring_enabled ? 'badge-online' : 'badge-unknown'}">
+                  ${d.is_monitoring_enabled ? 'Enabled' : 'Disabled'}
+                </span>
+              </div>
+            </div>
+            ${d.description ? `<div style="margin-top:10px;font-size:0.84rem;color:var(--color-text-muted);">${escHtml(d.description)}</div>` : ''}
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-self:flex-start;">
+            <button class="btn btn-primary" onclick="runManualTest()" id="testBtn">
+              <i class="fa-solid fa-bolt"></i> Test Connectivity
+            </button>
+            <button class="btn btn-outline" onclick="toggleMon(${d.id}, ${d.is_monitoring_enabled})">
+              <i class="fa-solid ${d.is_monitoring_enabled ? 'fa-pause' : 'fa-play'}"></i>
+              ${d.is_monitoring_enabled ? 'Pause' : 'Resume'} Monitoring
+            </button>
+            <a href="/devices" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('chartsSection').style.display = 'block';
+  loadHistory('24h');
+}
+
+async function loadHistory(range) {
+  const r = await apiGet(`/api/devices/${DEVICE_ID}/history?range=${range}`);
+  if (!r.ok) return;
+  const data = r.data.data;
+
+  // Stat grid
+  const a = data.analytics || {};
+  document.getElementById('deviceStatGrid').innerHTML = `
+    <div class="stat-card online"><div class="stat-icon online"><i class="fa-solid fa-percent"></i></div>
+      <div class="stat-value">${a.availability_pct != null ? a.availability_pct.toFixed(1)+'%' : '—'}</div>
+      <div class="stat-label">Availability</div></div>
+    <div class="stat-card info"><div class="stat-icon info"><i class="fa-solid fa-clock"></i></div>
+      <div class="stat-value">${a.avg_response_ms != null ? a.avg_response_ms.toFixed(0) : '—'}</div>
+      <div class="stat-label">Avg ms</div></div>
+    <div class="stat-card info"><div class="stat-icon info"><i class="fa-solid fa-bolt"></i></div>
+      <div class="stat-value">${a.min_response_ms != null ? a.min_response_ms.toFixed(0) : '—'}</div>
+      <div class="stat-label">Min ms</div></div>
+    <div class="stat-card warning"><div class="stat-icon warning"><i class="fa-solid fa-hourglass"></i></div>
+      <div class="stat-value">${a.max_response_ms != null ? a.max_response_ms.toFixed(0) : '—'}</div>
+      <div class="stat-label">Max ms</div></div>
+    <div class="stat-card offline"><div class="stat-icon offline"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <div class="stat-value">${a.packet_loss_pct != null ? a.packet_loss_pct.toFixed(1)+'%' : '—'}</div>
+      <div class="stat-label">Packet Loss</div></div>
+    <div class="stat-card info"><div class="stat-icon info"><i class="fa-solid fa-list"></i></div>
+      <div class="stat-value">${a.total_probes ?? 0}</div>
+      <div class="stat-label">Total Probes</div></div>
+  `;
+
+  // RT chart
+  const series = data.time_series || [];
+  const labels = series.map(p => new Date(p.checked_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}));
+  const values = series.map(p => p.is_reachable ? p.response_time_ms : null);
+  const colors = series.map(p => p.is_reachable ? '#1a78c2' : '#e53935');
+
+  const rtCanvas = document.getElementById('deviceRtChart');
+  if (rtChart) rtChart.destroy();
+  if (series.length > 0) {
+    rtChart = new Chart(rtCanvas, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Response Time (ms)',
+          data: values,
+          borderColor: '#1a78c2',
+          backgroundColor: 'rgba(26,120,194,0.08)',
+          fill: true,
+          spanGaps: true,
+          pointBackgroundColor: colors,
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: { y: { beginAtZero: true, title: { display: true, text: 'ms' } }, x: { ticks: { maxTicksLimit: 8 } } },
+        plugins: { legend: { display: false } },
+      },
+    });
+  }
+
+  // Avail chart
+  const trend = data.trend || [];
+  const tLabels = trend.map(t => t.bucket);
+  const tValues = trend.map(t => t.availability_pct);
+  const availCanvas = document.getElementById('deviceAvailChart');
+  if (availChart) availChart.destroy();
+  if (trend.length > 0) {
+    availChart = new Chart(availCanvas, {
+      type: 'bar',
+      data: {
+        labels: tLabels,
+        datasets: [{
+          label: 'Availability %',
+          data: tValues,
+          backgroundColor: tValues.map(v => v == null ? '#78909c' : v >= 99 ? '#1db954' : v >= 90 ? '#f59e0b' : '#e53935'),
+          borderRadius: 4,
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: { y: { min: 0, max: 100, title: { display: true, text: '%' } }, x: { ticks: { maxTicksLimit: 10 } } },
+        plugins: { legend: { display: false } },
+      },
+    });
+  }
+
+  // Probes table
+  const probes = data.probes || [];
+  const tbody = document.getElementById('probesBody');
+  if (!probes.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--color-text-muted);">No probes recorded yet.</td></tr>';
+  } else {
+    tbody.innerHTML = probes.map(p => `
+      <tr>
+        <td class="text-sm text-muted">${formatTsRelative(p.checked_at)}</td>
+        <td>${statusBadge(p.is_reachable ? 'online' : 'offline')}</td>
+        <td>${p.is_reachable ? formatRt(p.response_time_ms) : '—'}</td>
+        <td class="text-sm text-muted">${p.error_category ? escHtml(p.error_category) : '—'}</td>
+      </tr>
+    `).join('');
+  }
+
+  // Events
+  const events = data.events || [];
+  const evContainer = document.getElementById('deviceEventsContainer');
+  if (!events.length) {
+    evContainer.innerHTML = '<div class="text-muted text-sm" style="padding:12px;">No events for this device.</div>';
+  } else {
+    evContainer.innerHTML = events.map(ev => {
+      const { cls, icon } = eventTypeIcon(ev.event_type);
+      return `<div class="event-item ${cls}" style="margin-bottom:6px;">
+        <span class="event-icon">${icon}</span>
+        <div class="event-body">
+          <div class="event-msg">${escHtml(ev.message)}</div>
+          <div class="event-meta">${formatTs(ev.created_at)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+async function runManualTest() {
+  const btn = document.getElementById('testBtn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;"></span> Testing…'; }
+  const r = await apiPost(`/api/devices/${DEVICE_ID}/test`, {});
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Test Connectivity'; }
+
+  if (r.status === 429) { showToast('Rate Limited', r.data.message, 'warning'); return; }
+  if (!r.ok) { showToast('Error', r.data?.message || 'Test failed', 'error'); return; }
+
+  const res = r.data.data;
+  if (res.is_reachable) {
+    showToast('Online', `Reachable — ${res.response_time_ms?.toFixed(1) ?? '?'} ms`, 'online');
+  } else {
+    showToast('Offline', `Not reachable — ${res.error_category || 'no response'}`, 'offline');
+  }
+  setTimeout(loadDeviceDetail, 800);
+}
+
+async function toggleMon(id, current) {
+  const enable = !current;
+  const r = await apiPost(`/api/devices/${id}/monitoring`, { enabled: enable });
+  if (!r.ok) { showToast('Error', 'Failed to toggle monitoring', 'error'); return; }
+  showToast(enable ? 'Monitoring Enabled' : 'Monitoring Paused', '', enable ? 'online' : 'warning', 2000);
+  loadDeviceDetail();
+}
+
+document.getElementById('rtRange')?.addEventListener('change', function() {
+  loadHistory(this.value);
+});
+
+window.triggerRefresh = loadDeviceDetail;
+loadDeviceDetail();
+setInterval(() => loadHistory(document.getElementById('rtRange')?.value || '24h'), 15000);
+</script>
+{% endblock %}

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Network Monitor{% endblock %} — NetWatch</title>
+  <meta name="description" content="Python-based Network Device Connectivity Monitor — real-time device monitoring, analytics, and alerting.">
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="/static/css/style.css">
+
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ══ Sidebar ═══════════════════════════════════════════════════ -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">
+        <i class="fa-solid fa-network-wired"></i>
+      </div>
+      <div class="sidebar-logo-text">
+        <h1>NetWatch</h1>
+        <p>Network Monitor</p>
+      </div>
+    </div>
+
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Monitoring</div>
+      <a href="/" class="nav-item {% block nav_overview %}{% endblock %}" id="nav-overview">
+        <i class="fa-solid fa-gauge-high"></i> Overview
+      </a>
+      <a href="/devices" class="nav-item {% block nav_devices %}{% endblock %}" id="nav-devices">
+        <i class="fa-solid fa-server"></i> Devices
+      </a>
+      <a href="/topology" class="nav-item {% block nav_topology %}{% endblock %}" id="nav-topology">
+        <i class="fa-solid fa-diagram-project"></i> Network Topology
+      </a>
+
+      <div class="nav-section-label" style="margin-top:8px;">Analytics</div>
+      <a href="/analytics" class="nav-item {% block nav_analytics %}{% endblock %}" id="nav-analytics">
+        <i class="fa-solid fa-chart-line"></i> Analytics
+      </a>
+      <a href="/events" class="nav-item {% block nav_events %}{% endblock %}" id="nav-events">
+        <i class="fa-solid fa-bell"></i> Alerts &amp; Events
+        <span class="notif-badge" id="sidebar-unread" style="position:static;margin-left:auto;display:none;"></span>
+      </a>
+
+      <div class="nav-section-label" style="margin-top:8px;">System</div>
+      <a href="/settings" class="nav-item {% block nav_settings %}{% endblock %}" id="nav-settings">
+        <i class="fa-solid fa-sliders"></i> Settings
+      </a>
+      <a href="/about" class="nav-item {% block nav_about %}{% endblock %}" id="nav-about">
+        <i class="fa-solid fa-circle-info"></i> About Project
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      <small>CN Project 2024 — Python Flask</small>
+    </div>
+  </nav>
+
+  <!-- ══ Main Wrapper ═══════════════════════════════════════════════ -->
+  <div class="main-content" id="mainContent">
+
+    <!-- Topbar -->
+    <header class="topbar" id="topbar">
+      <button class="topbar-toggle" id="sidebarToggle" title="Toggle sidebar">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <span class="topbar-title">{% block page_title %}Dashboard{% endblock %}</span>
+
+      <!-- Monitoring Status -->
+      <div class="topbar-status" id="topbarStatus">
+        <span class="status-dot" id="monitorDot"></span>
+        <span id="monitorStatusText">Monitoring</span>
+      </div>
+
+      <span class="topbar-refresh" id="topbarRefresh"></span>
+
+      <div class="topbar-actions">
+        <button class="topbar-btn" id="notifBtn" title="Alerts &amp; Events" onclick="window.location='/events'">
+          <i class="fa-solid fa-bell"></i>
+          <span class="notif-badge" id="notifBadge" style="display:none;"></span>
+        </button>
+        <button class="topbar-btn" id="refreshBtn" title="Refresh data" onclick="triggerRefresh()">
+          <i class="fa-solid fa-rotate"></i>
+        </button>
+        <button class="topbar-btn" title="About" onclick="window.location='/about'">
+          <i class="fa-solid fa-circle-info"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Page Body -->
+    <main class="page-body" id="pageBody">
+      {% block content %}{% endblock %}
+    </main>
+
+  </div><!-- /main-content -->
+</div><!-- /app-shell -->
+
+<!-- ══ Toast Container ════════════════════════════════════════════ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ══ Scripts ════════════════════════════════════════════════════ -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="/static/js/app.js"></script>
+{% block scripts %}{% endblock %}
+
+</body>
+</html>

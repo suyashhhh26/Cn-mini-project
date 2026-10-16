@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block nav_settings %}active{% endblock %}
+{% block page_title %}Settings{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h2><i class="fa-solid fa-sliders"></i> Settings</h2>
+    <p class="page-subtitle">Configure monitoring behavior and application defaults</p>
+  </div>
+</div>
+
+<div style="max-width:680px;">
+
+  <form id="settingsForm" onsubmit="saveSettings(event)">
+
+    <div class="card mb-6">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-network-wired"></i> Monitoring Defaults</span>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="form-label">Default Monitoring Interval (seconds)</label>
+          <input type="number" class="form-control" id="sDefaultInterval" min="5" max="300" placeholder="30">
+          <div class="form-text">Applied to new devices. Range: 5–300 seconds.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Default Ping Timeout (seconds)</label>
+          <input type="number" class="form-control" id="sPingTimeout" min="1" max="30" placeholder="5">
+          <div class="form-text">How long to wait per ping request. Range: 1–30 seconds.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Maximum Concurrent Probes</label>
+          <input type="number" class="form-control" id="sMaxConcurrent" min="1" max="50" placeholder="10">
+          <div class="form-text">Limits simultaneous ping threads. Range: 1–50.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-6">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-database"></i> Data Retention</span>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="form-label">Probe History Retention (days)</label>
+          <input type="number" class="form-control" id="sRetentionDays" min="1" max="365" placeholder="30">
+          <div class="form-text">Probe records older than this will be automatically deleted. Range: 1–365.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-6">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-gauge"></i> Dashboard</span>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="form-label">Dashboard Refresh Interval (milliseconds)</label>
+          <input type="number" class="form-control" id="sDashInterval" min="1000" max="60000" step="500" placeholder="5000">
+          <div class="form-text">How often the dashboard polls for updates. Range: 1000–60000 ms.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;">
+      <button type="submit" class="btn btn-primary">
+        <i class="fa-solid fa-save"></i> Save Settings
+      </button>
+      <button type="button" class="btn btn-outline" onclick="loadSettings()">
+        <i class="fa-solid fa-rotate-left"></i> Reload
+      </button>
+    </div>
+
+  </form>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadSettings() {
+  const r = await apiGet('/api/settings');
+  if (!r.ok) { showToast('Error', 'Could not load settings', 'error'); return; }
+  const s = r.data.data || {};
+  document.getElementById('sDefaultInterval').value = s.default_monitoring_interval  || 30;
+  document.getElementById('sPingTimeout').value     = s.default_ping_timeout         || 5;
+  document.getElementById('sMaxConcurrent').value   = s.max_concurrent_probes        || 10;
+  document.getElementById('sRetentionDays').value   = s.data_retention_days          || 30;
+  document.getElementById('sDashInterval').value    = s.dashboard_refresh_interval   || 5000;
+}
+
+async function saveSettings(e) {
+  e.preventDefault();
+  const payload = {
+    default_monitoring_interval: parseInt(document.getElementById('sDefaultInterval').value),
+    default_ping_timeout:        parseInt(document.getElementById('sPingTimeout').value),
+    max_concurrent_probes:       parseInt(document.getElementById('sMaxConcurrent').value),
+    data_retention_days:         parseInt(document.getElementById('sRetentionDays').value),
+    dashboard_refresh_interval:  parseInt(document.getElementById('sDashInterval').value),
+  };
+
+  const r = await apiPut('/api/settings', payload);
+  if (!r.ok) {
+    const errors = r.data?.errors || {};
+    const msg = Object.values(errors).join('\n') || r.data?.message || 'Save failed';
+    showToast('Validation Error', msg, 'error');
+    return;
+  }
+  showToast('Saved', 'Settings updated successfully.', 'info');
+}
+
+loadSettings();
+</script>
+{% endblock %}

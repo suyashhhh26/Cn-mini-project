@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Analytics{% endblock %}
+{% block nav_analytics %}active{% endblock %}
+{% block page_title %}Network Analytics{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h2><i class="fa-solid fa-chart-line"></i> Network Analytics</h2>
+    <p class="page-subtitle">Probe-based availability and performance statistics</p>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;">
+    <select id="analyticsDevice" class="filter-select">
+      <option value="">All Devices</option>
+    </select>
+    <select id="analyticsRange" class="filter-select">
+      <option value="1h">Last 1 Hour</option>
+      <option value="24h" selected>Last 24 Hours</option>
+      <option value="7d">Last 7 Days</option>
+      <option value="30d">Last 30 Days</option>
+    </select>
+    <button class="btn btn-primary btn-sm" onclick="loadAnalytics()">
+      <i class="fa-solid fa-rotate"></i> Refresh
+    </button>
+  </div>
+</div>
+
+<!-- Stat Cards -->
+<div class="stat-grid mb-6" id="analyticsStatGrid">
+  <div class="loading-overlay" style="grid-column:1/-1;"><span class="spinner"></span></div>
+</div>
+
+<!-- Charts -->
+<div class="grid-2 mb-6">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fa-solid fa-chart-line"></i> Response Time Series</span>
+    </div>
+    <div class="card-body">
+      <div class="chart-container" style="height:240px;">
+        <canvas id="analyticsRtChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fa-solid fa-arrow-trend-up"></i> Availability Trend</span>
+    </div>
+    <div class="card-body">
+      <div class="chart-container" style="height:240px;">
+        <canvas id="analyticsTrendChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Info Note -->
+<div class="card" style="border-left:4px solid var(--color-blue);">
+  <div class="card-body" style="padding:14px 20px;">
+    <div style="display:flex;gap:12px;align-items:flex-start;">
+      <i class="fa-solid fa-circle-info" style="color:var(--color-blue);font-size:1rem;margin-top:2px;"></i>
+      <div style="font-size:0.84rem;color:var(--color-text-secondary);line-height:1.6;">
+        <strong>Availability Definition:</strong>
+        Availability (%) = Successful Probes ÷ Total Valid Probes × 100.
+        This is a <em>probe-based estimate</em> and may not equal true service uptime.
+        Only periods with at least one probe are included in calculations.
+        Statistics are computed from actual database records — no data is invented.
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/analytics.js"></script>
+{% endblock %}

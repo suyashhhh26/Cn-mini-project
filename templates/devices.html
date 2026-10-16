@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}Devices{% endblock %}
+{% block nav_devices %}active{% endblock %}
+{% block page_title %}Device Management{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h2><i class="fa-solid fa-server"></i> Devices</h2>
+    <p class="page-subtitle">Manage and monitor your network devices</p>
+  </div>
+  <button class="btn btn-primary" onclick="openModal('addDeviceModal')">
+    <i class="fa-solid fa-plus"></i> Add Device
+  </button>
+</div>
+
+<!-- Filters -->
+<div class="filters-bar">
+  <div class="filter-search">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <input type="text" class="form-control" id="devSearch" placeholder="Search by name, IP, or location…">
+  </div>
+  <select id="devStatusFilter" class="filter-select">
+    <option value="">All Status</option>
+    <option value="online">🟢 Online</option>
+    <option value="offline">🔴 Offline</option>
+    <option value="unknown">⚪ Unknown</option>
+  </select>
+  <select id="devTypeFilter" class="filter-select">
+    <option value="">All Types</option>
+    <option>Router</option><option>Server</option><option>Computer</option>
+    <option>Switch</option><option>Printer</option><option>Other</option>
+  </select>
+  <button class="btn btn-outline btn-sm" onclick="loadDevices()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+</div>
+
+<!-- Device Table -->
+<div class="table-container">
+  <table class="nm-table">
+    <thead>
+      <tr>
+        <th>Device</th>
+        <th>Target</th>
+        <th>Type</th>
+        <th>Location</th>
+        <th>Status</th>
+        <th>Response Time</th>
+        <th>Last Checked</th>
+        <th>Monitoring</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="devicesBody">
+      <tr><td colspan="9"><div class="loading-overlay"><span class="spinner"></span> Loading devices…</div></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══ Add Device Modal ══════════════════════════════════════════ -->
+<div class="modal-overlay" id="addDeviceModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fa-solid fa-plus"></i> Add Device</h3>
+      <button class="modal-close" onclick="closeModal('addDeviceModal')">×</button>
+    </div>
+    <form id="addDeviceForm" onsubmit="submitAddDevice(event)">
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Device Name <span class="required">*</span></label>
+          <input type="text" class="form-control" id="addName" placeholder="e.g. Gateway Router" maxlength="100">
+          <div class="form-error" id="errAddName"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">IP / Hostname <span class="required">*</span></label>
+          <input type="text" class="form-control" id="addTarget" placeholder="192.168.1.1 or router.local">
+          <div class="form-error" id="errAddTarget"></div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Device Type</label>
+          <select class="form-control" id="addType">
+            <option>Router</option><option>Server</option><option>Computer</option>
+            <option>Switch</option><option>Printer</option><option selected>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Location / Department</label>
+          <input type="text" class="form-control" id="addLocation" placeholder="e.g. Server Room" maxlength="200">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Monitoring Interval (seconds)</label>
+        <input type="number" class="form-control" id="addInterval" value="30" min="5" max="300">
+        <div class="form-text">Between 5 and 300 seconds</div>
+        <div class="form-error" id="errAddInterval"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description (optional)</label>
+        <textarea class="form-control" id="addDesc" rows="2" maxlength="500" placeholder="Optional notes…"></textarea>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+        <button type="button" class="btn btn-outline" onclick="closeModal('addDeviceModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="addSubmitBtn">
+          <i class="fa-solid fa-plus"></i> Add Device
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ══ Edit Device Modal ══════════════════════════════════════════ -->
+<div class="modal-overlay" id="editDeviceModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fa-solid fa-pen"></i> Edit Device</h3>
+      <button class="modal-close" onclick="closeModal('editDeviceModal')">×</button>
+    </div>
+    <form id="editDeviceForm" onsubmit="submitEditDevice(event)">
+      <input type="hidden" id="editDeviceId">
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Device Name <span class="required">*</span></label>
+          <input type="text" class="form-control" id="editName" maxlength="100">
+          <div class="form-error" id="errEditName"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">IP / Hostname <span class="required">*</span></label>
+          <input type="text" class="form-control" id="editTarget">
+          <div class="form-error" id="errEditTarget"></div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Device Type</label>
+          <select class="form-control" id="editType">
+            <option>Router</option><option>Server</option><option>Computer</option>
+            <option>Switch</option><option>Printer</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Location</label>
+          <input type="text" class="form-control" id="editLocation" maxlength="200">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Monitoring Interval (seconds)</label>
+        <input type="number" class="form-control" id="editInterval" min="5" max="300">
+        <div class="form-error" id="errEditInterval"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-control" id="editDesc" rows="2" maxlength="500"></textarea>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+        <button type="button" class="btn btn-outline" onclick="closeModal('editDeviceModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">
+          <i class="fa-solid fa-save"></i> Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/devices.js"></script>
+{% endblock %}

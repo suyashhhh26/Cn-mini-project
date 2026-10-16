@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}About Project{% endblock %}
+{% block nav_about %}active{% endblock %}
+{% block page_title %}About Project{% endblock %}
+
+{% block content %}
+
+<div style="max-width:900px;">
+
+  <!-- Hero -->
+  <div class="card mb-6" style="background:linear-gradient(135deg,rgba(26,120,194,0.12),rgba(0,188,212,0.08));border-color:rgba(26,120,194,0.25);">
+    <div class="card-body" style="padding:30px;">
+      <div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap;">
+        <div style="width:64px;height:64px;background:linear-gradient(135deg,#1a78c2,#00bcd4);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0;box-shadow:0 6px 18px rgba(26,120,194,0.3);">
+          <i class="fa-solid fa-network-wired" style="color:white;"></i>
+        </div>
+        <div>
+          <h2 style="font-size:1.6rem;font-weight:800;color:var(--color-navy);margin-bottom:6px;">
+            NetWatch — Network Device Connectivity Monitor
+          </h2>
+          <p style="color:var(--color-text-secondary);font-size:0.9rem;line-height:1.7;max-width:620px;">
+            A Python-based network monitoring application that demonstrates core Computer Networks concepts
+            including IP addressing, ICMP/ping, network latency, client-server architecture, and real-time
+            connectivity monitoring. Built for a Computer Engineering academic project.
+          </p>
+          <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+            <span class="badge badge-info"><i class="fa-brands fa-python"></i> Python 3.12</span>
+            <span class="badge badge-info"><i class="fa-solid fa-flask"></i> Flask 3</span>
+            <span class="badge badge-info"><i class="fa-solid fa-database"></i> SQLite</span>
+            <span class="badge badge-info"><i class="fa-solid fa-chart-line"></i> Chart.js</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Networking Concepts -->
+  <div class="about-section">
+    <h3><i class="fa-solid fa-graduation-cap" style="color:var(--color-blue);"></i> Computer Networks Concepts Demonstrated</h3>
+    <div class="concept-grid">
+      <div class="concept-card">
+        <h4>📡 IP Addressing</h4>
+        <p>Both IPv4 and IPv6 addresses are accepted. Python's <code>ipaddress</code> module validates addresses before storage.</p>
+      </div>
+      <div class="concept-card">
+        <h4>🏓 ICMP &amp; Ping</h4>
+        <p>Connectivity is verified using the system <code>ping</code> command which sends ICMP Echo Request packets and awaits Echo Reply.</p>
+      </div>
+      <div class="concept-card">
+        <h4>⏱️ Network Latency</h4>
+        <p>Round-trip time (RTT) is measured in milliseconds for each probe. Trends are graphed over time.</p>
+      </div>
+      <div class="concept-card">
+        <h4>📦 Packet Loss</h4>
+        <p>Packet loss percentage is computed from the ratio of failed probes to total probes over a selected time window.</p>
+      </div>
+      <div class="concept-card">
+        <h4>🖥️ Client-Server</h4>
+        <p>Flask implements a REST API server. The browser acts as the client, fetching JSON data and rendering dashboards.</p>
+      </div>
+      <div class="concept-card">
+        <h4>🌐 DNS Resolution</h4>
+        <p>Hostnames are accepted as monitoring targets. The OS resolves them to IP addresses when executing the ping command.</p>
+      </div>
+      <div class="concept-card">
+        <h4>🔧 Network Troubleshooting</h4>
+        <p>Manual connectivity tests, event logs, error classification, and status history aid in diagnosing network issues.</p>
+      </div>
+      <div class="concept-card">
+        <h4>📊 Availability Metrics</h4>
+        <p>Availability (%) = Successful Probes ÷ Total Probes × 100. Calculated from real stored measurements.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Architecture -->
+  <div class="about-section">
+    <h3><i class="fa-solid fa-sitemap" style="color:var(--color-blue);"></i> Architecture</h3>
+    <div class="card">
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;">
+          <div style="padding:14px;background:rgba(26,120,194,0.06);border-radius:10px;border:1px solid var(--color-border);">
+            <div style="font-weight:700;color:var(--color-navy);margin-bottom:6px;">⚙️ Backend (Python)</div>
+            <ul style="font-size:0.82rem;color:var(--color-text-secondary);padding-left:16px;line-height:1.8;">
+              <li>Flask REST API</li><li>SQLite + WAL mode</li>
+              <li>Background thread scheduler</li><li>Subprocess ping</li>
+              <li>Input validation</li>
+            </ul>
+          </div>
+          <div style="padding:14px;background:rgba(0,188,212,0.06);border-radius:10px;border:1px solid var(--color-border);">
+            <div style="font-weight:700;color:var(--color-navy);margin-bottom:6px;">🌐 Frontend (Vanilla)</div>
+            <ul style="font-size:0.82rem;color:var(--color-text-secondary);padding-left:16px;line-height:1.8;">
+              <li>HTML5 + CSS3</li><li>Vanilla JavaScript</li>
+              <li>Chart.js charts</li><li>Font Awesome icons</li>
+              <li>5s auto-refresh polling</li>
+            </ul>
+          </div>
+          <div style="padding:14px;background:rgba(29,185,84,0.06);border-radius:10px;border:1px solid var(--color-border);">
+            <div style="font-weight:700;color:var(--color-navy);margin-bottom:6px;">🗄️ Database (SQLite)</div>
+            <ul style="font-size:0.82rem;color:var(--color-text-secondary);padding-left:16px;line-height:1.8;">
+              <li>devices table</li><li>probe_results table</li>
+              <li>events table</li><li>settings table</li>
+              <li>Parameterized queries</li>
+            </ul>
+          </div>
+          <div style="padding:14px;background:rgba(245,158,11,0.06);border-radius:10px;border:1px solid var(--color-border);">
+            <div style="font-weight:700;color:var(--color-navy);margin-bottom:6px;">🔒 Security</div>
+            <ul style="font-size:0.82rem;color:var(--color-text-secondary);padding-left:16px;line-height:1.8;">
+              <li>shell=False subprocess</li><li>SQL parameterization</li>
+              <li>Input validation</li><li>Rate limiting</li>
+              <li>Bounded concurrency</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Limitations -->
+  <div class="about-section">
+    <h3><i class="fa-solid fa-triangle-exclamation" style="color:var(--color-warning);"></i> Known Limitations</h3>
+    <div class="card" style="border-left:4px solid var(--color-warning);">
+      <div class="card-body">
+        <ul style="font-size:0.875rem;color:var(--color-text-secondary);line-height:1.9;padding-left:18px;">
+          <li><strong>ICMP Filtering:</strong> Many devices block ICMP Echo requests at the firewall. A failed ping does <em>not</em> necessarily mean the device is off.</li>
+          <li><strong>OS Permissions:</strong> Some OS configurations may restrict raw ICMP operations or require elevated privileges.</li>
+          <li><strong>Probe-Based Availability:</strong> Availability is estimated from probes and may not reflect true service uptime between checks.</li>
+          <li><strong>Local Scope:</strong> This application is intended for authorized monitoring of explicitly registered targets only.</li>
+          <li><strong>No Subnet Discovery:</strong> The application does not scan IP ranges or discover devices automatically.</li>
+          <li><strong>Topology is Logical:</strong> Physical network connections are not auto-discovered. The topology view is illustrative only.</li>
+          <li><strong>Single-Host Deployment:</strong> This is a single-machine application — no distributed monitoring.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- How Monitoring Works -->
+  <div class="about-section">
+    <h3><i class="fa-solid fa-gears" style="color:var(--color-blue);"></i> How Monitoring Works</h3>
+    <div class="card">
+      <div class="card-body">
+        <ol style="font-size:0.875rem;color:var(--color-text-secondary);line-height:2;padding-left:18px;">
+          <li>On startup, a background <strong>scheduler thread</strong> begins checking all enabled devices.</li>
+          <li>Each device has a configurable <strong>monitoring interval</strong> (5–300 seconds).</li>
+          <li>When a device is due, a <strong>worker thread</strong> is dispatched (bounded by max concurrency).</li>
+          <li>The worker calls <code>ping_service.ping()</code> which runs the OS <code>ping</code> command via <code>subprocess.run()</code> with <code>shell=False</code>.</li>
+          <li>The command output is parsed for <strong>round-trip time</strong>. The return code determines reachability.</li>
+          <li>Results are stored in the <strong>probe_results</strong> table with a UTC timestamp.</li>
+          <li>If the device status changed, an <strong>event</strong> is logged in the events table.</li>
+          <li>The dashboard <strong>polls /api/dashboard every 5 seconds</strong> and updates without triggering new pings.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stack info -->
+  <div class="about-section">
+    <h3><i class="fa-solid fa-layer-group" style="color:var(--color-blue);"></i> Technology Stack</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;">
+      {% for tech, desc in [
+        ('Python 3.12','Core backend language'),
+        ('Flask 3','Web framework & REST API'),
+        ('SQLite','Embedded relational DB'),
+        ('subprocess','Real system ping'),
+        ('threading','Background scheduler'),
+        ('ipaddress','IP validation (stdlib)'),
+        ('Chart.js 4','Response time charts'),
+        ('Font Awesome','UI icon library'),
+        ('CSS Glassmorphism','Dashboard aesthetic'),
+        ('Inter Font','Typography'),
+      ] %}
+      <div style="background:rgba(255,255,255,0.75);border:1px solid var(--color-border);border-radius:9px;padding:12px;">
+        <div style="font-weight:700;font-size:0.875rem;color:var(--color-navy);">{{ tech }}</div>
+        <div style="font-size:0.78rem;color:var(--color-text-muted);">{{ desc }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

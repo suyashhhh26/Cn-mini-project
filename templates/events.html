@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Alerts & Events{% endblock %}
+{% block nav_events %}active{% endblock %}
+{% block page_title %}Alerts & Events{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h2><i class="fa-solid fa-bell"></i> Alerts &amp; Events</h2>
+    <p class="page-subtitle">System event log and status change history</p>
+  </div>
+  <div style="display:flex;gap:10px;">
+    <button class="btn btn-outline btn-sm" onclick="markAllRead()">
+      <i class="fa-solid fa-check-double"></i> Mark All Read
+    </button>
+    <button class="btn btn-primary btn-sm" onclick="loadEvents()">
+      <i class="fa-solid fa-rotate"></i> Refresh
+    </button>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="filters-bar mb-6">
+  <div class="filter-search" style="flex:1;min-width:200px;">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <input type="text" class="form-control" id="evSearch" placeholder="Search events…">
+  </div>
+  <select id="evSeverity" class="filter-select">
+    <option value="">All Severity</option>
+    <option value="info">ℹ️ Info</option>
+    <option value="warning">⚠️ Warning</option>
+    <option value="error">❌ Error</option>
+    <option value="critical">🚨 Critical</option>
+  </select>
+  <select id="evType" class="filter-select">
+    <option value="">All Types</option>
+    <option value="device_online">Device Online</option>
+    <option value="device_offline">Device Offline</option>
+    <option value="device_added">Device Added</option>
+    <option value="device_updated">Device Updated</option>
+    <option value="device_deleted">Device Deleted</option>
+    <option value="monitoring_start">Monitoring Start</option>
+    <option value="monitoring_stop">Monitoring Stop</option>
+    <option value="monitoring_error">Monitoring Error</option>
+  </select>
+  <select id="evRange" class="filter-select">
+    <option value="24h">Last 24h</option>
+    <option value="7d" selected>Last 7d</option>
+    <option value="30d">Last 30d</option>
+  </select>
+  <select id="evRead" class="filter-select">
+    <option value="">All</option>
+    <option value="false">Unread</option>
+    <option value="true">Read</option>
+  </select>
+</div>
+
+<!-- Events List -->
+<div class="card">
+  <div class="card-body p0">
+    <div id="eventsContainer" style="padding:16px;min-height:200px;">
+      <div class="loading-overlay"><span class="spinner"></span> Loading events…</div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadEvents() {
+  const q       = document.getElementById('evSearch').value;
+  const sev     = document.getElementById('evSeverity').value;
+  const type    = document.getElementById('evType').value;
+  const range   = document.getElementById('evRange').value;
+  const isRead  = document.getElementById('evRead').value;
+
+  let url = `/api/events?range=${range}&limit=200`;
+  if (q)      url += `&q=${encodeURIComponent(q)}`;
+  if (sev)    url += `&severity=${encodeURIComponent(sev)}`;
+  if (type)   url += `&event_type=${encodeURIComponent(type)}`;
+  if (isRead) url += `&is_read=${encodeURIComponent(isRead)}`;
+
+  const r = await apiGet(url);
+  if (!r.ok) { showToast('Error', 'Failed to load events', 'error'); return; }
+  const events = r.data.data || [];
+
+  const container = document.getElementById('eventsContainer');
+  if (!events.length) {
+    container.innerHTML = `<div class="empty-state">
+      <div class="empty-state-icon"><i class="fa-solid fa-bell-slash"></i></div>
+      <h3>No Events Found</h3>
+      <p>No events match your current filters. Try widening the time range or clearing filters.</p>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = events.map(ev => {
+    const { cls, icon } = eventTypeIcon(ev.event_type);
+    const unread = !ev.is_read ? 'style="background:rgba(26,120,194,0.05);"' : '';
+    return `
+      <div class="event-item ${cls}" ${unread} data-id="${ev.id}" style="margin-bottom:8px;cursor:pointer;" onclick="markRead(${ev.id}, this)">
+        <span class="event-icon">${icon}</span>
+        <div class="event-body" style="flex:1;">
+          <div class="event-msg" style="${!ev.is_read ? 'font-weight:600;' : ''}">${escHtml(ev.message)}</div>
+          <div class="event-meta">
+            ${ev.device_name ? `<a href="/devices/${ev.device_id}" style="color:var(--color-blue);font-size:0.78rem;">${escHtml(ev.device_name)}</a> · ` : ''}
+            ${formatTs(ev.created_at)}
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          ${severityBadge(ev.severity)}
+          ${!ev.is_read ? '<span class="badge badge-info" style="font-size:0.68rem;padding:2px 7px;">New</span>' : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function markRead(id, el) {
+  await apiPatch(`/api/events/${id}/read`);
+  if (el) {
+    el.style.background = '';
+    const msgEl = el.querySelector('.event-msg');
+    if (msgEl) msgEl.style.fontWeight = '';
+    const newBadge = el.querySelector('.badge-info');
+    if (newBadge && newBadge.textContent === 'New') newBadge.remove();
+  }
+}
+
+async function markAllRead() {
+  await apiPost('/api/events/read-all', {});
+  showToast('Done', 'All events marked as read.', 'info', 2000);
+  loadEvents();
+}
+
+['evSearch','evSeverity','evType','evRange','evRead'].forEach(id => {
+  document.getElementById(id)?.addEventListener('change', loadEvents);
+  document.getElementById(id)?.addEventListener('input', loadEvents);
+});
+
+window.triggerRefresh = loadEvents;
+loadEvents();
+setInterval(loadEvents, 15000);
+</script>
+{% endblock %}

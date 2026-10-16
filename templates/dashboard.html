@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Overview{% endblock %}
+{% block nav_overview %}active{% endblock %}
+{% block page_title %}Overview Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- Stat Cards -->
+<div class="stat-grid" id="statGrid">
+  <div class="stat-card info"><div class="stat-icon info"><i class="fa-solid fa-server"></i></div><div class="stat-value" id="statTotal">—</div><div class="stat-label">Total Devices</div></div>
+  <div class="stat-card online"><div class="stat-icon online"><i class="fa-solid fa-circle-check"></i></div><div class="stat-value" id="statOnline">—</div><div class="stat-label">Online</div></div>
+  <div class="stat-card offline"><div class="stat-icon offline"><i class="fa-solid fa-circle-xmark"></i></div><div class="stat-value" id="statOffline">—</div><div class="stat-label">Offline</div></div>
+  <div class="stat-card warning"><div class="stat-icon warning"><i class="fa-solid fa-circle-question"></i></div><div class="stat-value" id="statUnknown">—</div><div class="stat-label">Unknown</div></div>
+  <div class="stat-card info"><div class="stat-icon info"><i class="fa-solid fa-clock"></i></div><div class="stat-value" id="statAvgRt">—</div><div class="stat-label">Avg Response</div></div>
+  <div class="stat-card online"><div class="stat-icon online"><i class="fa-solid fa-percent"></i></div><div class="stat-value" id="statAvail">—</div><div class="stat-label">Availability</div></div>
+</div>
+
+<!-- Row 1: Charts -->
+<div class="grid-2 mb-6">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fa-solid fa-chart-pie"></i> Device Status Distribution</span>
+    </div>
+    <div class="card-body" style="display:flex;align-items:center;justify-content:center;min-height:220px;">
+      <div id="donutEmpty" class="empty-state" style="display:none;padding:24px;">
+        <div class="empty-state-icon"><i class="fa-solid fa-chart-pie"></i></div>
+        <p>No devices yet</p>
+      </div>
+      <div class="donut-wrapper" style="position:relative;width:100%;max-width:240px;height:210px;display:flex;align-items:center;justify-content:center;">
+        <canvas id="donutChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fa-solid fa-chart-line"></i> Response Time (Last 24h)</span>
+      <select id="rtDeviceSelect" class="filter-select" style="font-size:0.78rem;padding:5px 9px;">
+        <option value="">All Devices (avg)</option>
+      </select>
+    </div>
+    <div class="card-body">
+      <div class="chart-container" style="height:200px;">
+        <canvas id="rtChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Row 2: Availability Trend + Recent Events -->
+<div class="grid-2-1 mb-6">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fa-solid fa-arrow-trend-up"></i> Availability Trend</span>
+      <select id="trendRange" class="filter-select" style="font-size:0.78rem;padding:5px 9px;">
+        <option value="24h">Last 24h</option>
+        <option value="7d">Last 7d</option>
+      </select>
+    </div>
+    <div class="card-body">
+      <div class="chart-container" style="height:200px;">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fa-solid fa-bell"></i> Recent Events</span>
+      <a href="/events" class="btn btn-sm btn-outline">View All</a>
+    </div>
+    <div class="card-body p0">
+      <div id="recentEventsContainer" style="max-height:240px;overflow-y:auto;padding:12px;">
+        <div class="loading-overlay"><span class="spinner"></span> Loading…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Row 3: Device Table -->
+<div class="card mb-6">
+  <div class="card-header">
+    <span class="card-title"><i class="fa-solid fa-table-list"></i> Device Status</span>
+    <a href="/devices" class="btn btn-sm btn-primary"><i class="fa-solid fa-plus"></i> Add Device</a>
+  </div>
+
+  <!-- Filters -->
+  <div style="padding:12px 20px;border-bottom:1px solid var(--color-border);display:flex;gap:10px;flex-wrap:wrap;">
+    <div class="filter-search" style="flex:1;min-width:180px;">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" class="form-control" id="devSearch" placeholder="Search devices…">
+    </div>
+    <select id="devStatusFilter" class="filter-select">
+      <option value="">All Status</option>
+      <option value="online">Online</option>
+      <option value="offline">Offline</option>
+      <option value="unknown">Unknown</option>
+    </select>
+    <select id="devTypeFilter" class="filter-select">
+      <option value="">All Types</option>
+      <option>Router</option><option>Server</option><option>Computer</option>
+      <option>Switch</option><option>Printer</option><option>Other</option>
+    </select>
+  </div>
+
+  <div class="card-body p0">
+    <div class="table-container" style="border:none;border-radius:0;">
+      <table class="nm-table" id="deviceTable">
+        <thead>
+          <tr>
+            <th>Device</th>
+            <th>Target</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Response</th>
+            <th>Last Checked</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="deviceTableBody">
+          <tr><td colspan="7"><div class="loading-overlay"><span class="spinner"></span> Loading…</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/dashboard.js"></script>
+{% endblock %}
