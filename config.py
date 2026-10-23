@@ -7,7 +7,6 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).parent.resolve()
 INSTANCE_DIR = BASE_DIR / "instance"
-INSTANCE_DIR.mkdir(exist_ok=True)
 
 
 class Config:
@@ -53,14 +52,25 @@ class ProductionConfig(Config):
     DEBUG = False
 
 
+class DemoConfig(Config):
+    """Read-only demo mode for serverless environments (e.g. Vercel)."""
+    DEBUG = False
+    DATABASE_PATH = ":memory:"
+
+
 CONFIG_MAP = {
     "development": DevelopmentConfig,
     "testing": TestingConfig,
     "production": ProductionConfig,
+    "demo": DemoConfig,
     "default": DevelopmentConfig,
 }
 
 
 def get_config(env: str | None = None) -> Config:
     env = env or os.environ.get("FLASK_ENV", "default")
-    return CONFIG_MAP.get(env, DevelopmentConfig)()
+    cfg_cls = CONFIG_MAP.get(env, DevelopmentConfig)
+    # Create instance dir only when we'll actually write to disk
+    if cfg_cls not in (TestingConfig, DemoConfig):
+        INSTANCE_DIR.mkdir(exist_ok=True)
+    return cfg_cls()
