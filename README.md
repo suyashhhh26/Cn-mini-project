@@ -8,6 +8,9 @@
 A production-grade, full-stack network monitoring application built for Computer Engineering and Computer Networks (CN) academic projects. **NetWatch** enables continuous reachability monitoring, latency measurement (Round-Trip Time / RTT), uptime/downtime tracking, automated event detection, and real-time visualization across heterogeneous network nodes (routers, servers, workstations, switches, and printers).
 
 ---
+run link
+https://cn-mini-project-h1nj.vercel.app/
+
 
 ## 🌟 Key Features
 
