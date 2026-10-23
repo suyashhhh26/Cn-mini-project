@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 from flask import Flask, render_template, send_from_directory
-app = Flask(application)
+
 
 if hasattr(sys.stdout, "reconfigure"):
     try:
